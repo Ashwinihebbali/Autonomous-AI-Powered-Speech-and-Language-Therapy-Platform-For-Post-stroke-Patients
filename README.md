@@ -14,7 +14,7 @@ This project demonstrates practical knowledge of software development, problem-s
 
 ---
 
-## 🎯 Objectives
+## 🎯 Objectives:
 - Develop a real-world solution using modern technologies  
 - Apply software engineering principles  
 - Build a scalable and efficient system  
