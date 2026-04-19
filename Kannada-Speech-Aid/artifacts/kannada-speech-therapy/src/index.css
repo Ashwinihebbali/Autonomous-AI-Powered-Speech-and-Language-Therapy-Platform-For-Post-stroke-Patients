@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Noto+Sans+Kannada:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'DM Sans', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-kannada: 'Noto Sans Kannada', sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-border: hsl(var(--primary-border));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-border: hsl(var(--secondary-border));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-border: hsl(var(--muted-border));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-border: hsl(var(--accent-border));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-border: hsl(var(--destructive-border));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-primary-border: hsl(var(--sidebar-primary-border));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-accent-border: hsl(var(--sidebar-accent-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
+}
+
+:root {
+  /* Warm Healthcare Palette */
+  /* Backgrounds: Warm off-white */
+  --background: 30 20% 98%;
+  --foreground: 220 20% 20%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 20%;
+  --card-border: 30 10% 92%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 20%;
+  --popover-border: 30 10% 92%;
+
+  /* Primary: Soft Teal */
+  --primary: 173 58% 39%;
+  --primary-foreground: 0 0% 100%;
+  --primary-border: 173 58% 34%;
+
+  /* Secondary: Warm Peach */
+  --secondary: 26 89% 67%;
+  --secondary-foreground: 0 0% 100%;
+  --secondary-border: 26 89% 62%;
+
+  /* Muted: Soft Gray/Beige */
+  --muted: 30 15% 95%;
+  --muted-foreground: 220 10% 45%;
+  --muted-border: 30 15% 90%;
+
+  /* Accent: Soft Yellow/Sand */
+  --accent: 43 74% 66%;
+  --accent-foreground: 220 20% 20%;
+  --accent-border: 43 74% 61%;
+
+  /* Destructive: Soft Coral/Red */
+  --destructive: 0 70% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --destructive-border: 0 70% 55%;
+
+  /* Success/Warning */
+  --success: 142 60% 45%;
+  --success-foreground: 0 0% 100%;
+  
+  --warning: 38 92% 50%;
+  --warning-foreground: 220 20% 20%;
+
+  --border: 30 15% 90%;
+  --input: 30 15% 90%;
+  --ring: 173 58% 39%;
+
+  --chart-1: 173 58% 39%; /* Teal */
+  --chart-2: 26 89% 67%;  /* Peach */
+  --chart-3: 43 74% 66%;  /* Yellow */
+  --chart-4: 340 60% 65%; /* Pink */
+  --chart-5: 200 50% 60%; /* Blue */
+
+  --sidebar: 30 20% 98%;
+  --sidebar-foreground: 220 20% 20%;
+  --sidebar-border: 30 15% 90%;
+  --sidebar-primary: 173 58% 39%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-primary-border: 173 58% 34%;
+  --sidebar-accent: 30 15% 95%;
+  --sidebar-accent-foreground: 220 20% 20%;
+  --sidebar-accent-border: 30 15% 90%;
+  --sidebar-ring: 173 58% 39%;
+
+  --radius: 1rem;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 35px 60px -15px rgb(0 0 0 / 0.15);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    /* Soft pattern background for depth */
+    background-image: radial-gradient(hsl(var(--primary) / 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight text-foreground;
+  }
+}
+
+.kannada-text {
+  font-family: var(--font-kannada);
+  line-height: 1.5;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-lg;
+}
+
+.glass-dark {
+  @apply bg-black/70 backdrop-blur-md border border-white/10 shadow-lg;
+}
+
+/* Smooth gradients */
+.bg-gradient-warm {
+  @apply bg-gradient-to-br from-primary/10 via-background to-secondary/10;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-teal-600;
+}
+
+/* Accessible focus rings */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background transition-shadow;
+}

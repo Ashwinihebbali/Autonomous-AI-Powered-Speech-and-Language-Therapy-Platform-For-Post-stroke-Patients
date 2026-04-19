@@ -1,0 +1,18 @@
+packages:
+  "recharts": "Data visualization for patient progress charts"
+  "framer-motion": "Smooth animations and page transitions for elderly accessibility"
+  "date-fns": "Formatting dates for session history and charts"
+  "lucide-react": "Clean, accessible icons for the UI"
+
+images:
+  - path: "artifacts/kannada-speech-therapy/public/images/hero-bg.png"
+    description: "Soft, warm, abstract background with gentle waves in teal and peach colors, healthcare and wellness vibe, highly accessible"
+    aspect_ratio: "16:9"
+  - path: "artifacts/kannada-speech-therapy/public/images/logo-icon.png"
+    description: "Minimalist icon of a sound wave transforming into a leaf, soft teal and peach colors, transparent background, friendly healthcare logo"
+    aspect_ratio: "1:1"
+
+notes:
+  - Audio worklet should be assumed to be available at /audio-playback-worklet.js if needed, but we will primarily use MediaRecorder for capture.
+  - Orval generated hooks are used from @workspace/api-client-react. Dates from API are strings and will be parsed in UI.
+  - The app uses a dual-role flow (Patient/Therapist) selectable from the home screen.
