@@ -1,4 +1,4 @@
-# VaakSudhaar — AI-Assisted Kannada Speech Therapy
+# VaakSudhaar — AI-Assisted Kannada Speech Therapy - Phase 1 (Milestone 1)
 
 <div align="center">
 
