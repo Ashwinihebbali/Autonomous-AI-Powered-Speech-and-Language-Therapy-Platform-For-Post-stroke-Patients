@@ -1,11 +1,14 @@
 import { Router, type IRouter } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
-import { ensureCompatibleFormat } from "@workspace/integrations-openai-ai-server/audio";
 import { TranscribeSpeechBody } from "@workspace/api-zod";
+import FormData from "form-data";
+import fetch from "node-fetch";
 
 const router: IRouter = Router();
 
-router.post("/speech/transcribe", async (req, res) => {
+// Your local Python AI server
+const AI_SERVER_URL = "http://localhost:8000";
+
+router.post("/transcribe", async (req, res) => {
   const body = TranscribeSpeechBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: "Invalid request body" });
@@ -15,59 +18,82 @@ router.post("/speech/transcribe", async (req, res) => {
   const { audio, expectedText } = body.data;
 
   let transcribedText = "";
+  let accuracyScore   = 0;
+  let feedbackText    = "Good effort! Keep practicing.";
+  let suggestions: string[] = [
+    "Try speaking more slowly",
+    "Focus on each syllable"
+  ];
 
   try {
+    // ── Step 1: Convert base64 audio to buffer ──────────────────
     const audioBuffer = Buffer.from(audio, "base64");
-    const { buffer, format } = await ensureCompatibleFormat(audioBuffer);
 
-    const transcription = await openai.audio.transcriptions.create({
-      model: "gpt-4o-mini-transcribe",
-      file: new File([buffer], `audio.${format}`, { type: `audio/${format}` }),
-      response_format: "json",
+    // ── Step 2: Send to our Python AI server for scoring ────────
+    const formData = new FormData();
+    formData.append("audio", audioBuffer, {
+      filename:    "audio.wav",
+      contentType: "audio/wav",
+    });
+    formData.append("expected_text", expectedText || "");
+
+    const scoreResponse = await fetch(`${AI_SERVER_URL}/score`, {
+      method:  "POST",
+      body:    formData,
+      headers: formData.getHeaders(),
     });
 
-    transcribedText = transcription.text;
-  } catch (err) {
-    console.error("Transcription error:", err);
-    transcribedText = "";
-  }
+    if (scoreResponse.ok) {
+      const result = await scoreResponse.json() as {
+        success:          boolean;
+        transcription:    string;
+        expected:         string;
+        score:            number;
+        feedback:         string;
+        is_correct:       boolean;
+        duration_seconds: number;
+      };
 
-  const feedbackPrompt = `You are a speech therapy assistant helping a stroke patient practice Kannada pronunciation.
+      if (result.success) {
+        transcribedText = result.transcription  || "";
+        accuracyScore   = result.score          || 0;
+        feedbackText    = result.feedback       || feedbackText;
 
-Expected Kannada text: "${expectedText}"
-Patient spoke: "${transcribedText || "(unclear/no audio detected)"}"
-
-Evaluate the pronunciation accuracy on a scale of 0-100. Be encouraging and supportive.
-Consider that the patient is recovering from a stroke and may have difficulty speaking clearly.
-
-Respond in JSON format:
-{
-  "accuracyScore": <number 0-100>,
-  "feedbackText": "<encouraging feedback in simple English, 1-2 sentences>",
-  "suggestions": ["<specific tip 1>", "<specific tip 2>"]
-}`;
-
-  let accuracyScore = 0;
-  let feedbackText = "Good effort! Keep practicing.";
-  let suggestions: string[] = ["Try speaking more slowly", "Focus on each syllable"];
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-5.2",
-      max_completion_tokens: 500,
-      messages: [{ role: "user", content: feedbackPrompt }],
-      response_format: { type: "json_object" },
-    });
-
-    const content = response.choices[0]?.message?.content;
-    if (content) {
-      const parsed = JSON.parse(content);
-      accuracyScore = Math.min(100, Math.max(0, Number(parsed.accuracyScore) || 0));
-      feedbackText = parsed.feedbackText || feedbackText;
-      suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions : suggestions;
+        // Build suggestions based on score
+        if (accuracyScore >= 90) {
+          suggestions = [
+            "Excellent pronunciation!",
+            "Try the next exercise"
+          ];
+        } else if (accuracyScore >= 70) {
+          suggestions = [
+            "Good job! Practice this word a few more times",
+            "Try speaking at a slightly faster pace"
+          ];
+        } else if (accuracyScore >= 50) {
+          suggestions = [
+            "Try breaking the word into syllables",
+            "Listen to the example and repeat slowly"
+          ];
+        } else {
+          suggestions = [
+            "Take a deep breath and try again",
+            "Speak slowly and clearly, one sound at a time"
+          ];
+        }
+      }
+    } else {
+      console.error("AI server error:", scoreResponse.status);
+      // Fallback — still return something useful
+      transcribedText = "";
+      accuracyScore   = 0;
     }
+
   } catch (err) {
-    console.error("AI feedback error:", err);
+    console.error("Error calling AI server:", err);
+    // If AI server is down, return graceful fallback
+    feedbackText = "Speech analysis unavailable. Please try again.";
+    suggestions  = ["Make sure the AI server is running on port 8000"];
   }
 
   res.json({

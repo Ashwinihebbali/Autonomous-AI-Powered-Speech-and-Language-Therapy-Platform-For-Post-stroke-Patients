@@ -1,50 +1,91 @@
-# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# ════════════════════════════════════════════════
+# Dependencies
+# ════════════════════════════════════════════════
+node_modules/
+**/node_modules/
+.pnpm-store/
 
-# compiled output
-dist
-tmp
-out-tsc
-*.tsbuildinfo
-.expo
-.expo-shared
+# ════════════════════════════════════════════════
+# Environment variables — NEVER commit these
+# ════════════════════════════════════════════════
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
 
-# dependencies
-node_modules
+# ════════════════════════════════════════════════
+# Python
+# ════════════════════════════════════════════════
+.agents/venv/
+**/venv/
+**/__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
 
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+# ════════════════════════════════════════════════
+# AI Model files — too large for GitHub (>100MB limit)
+# Download separately — see README.md for instructions
+# ════════════════════════════════════════════════
+.agents/stt/models/whisper-kannada-final/
+.agents/stt/models/whisper-kannada-ct2/*.bin
+.agents/stt/models/**/*.bin
+.agents/stt/models/**/*.pt
+.agents/stt/models/**/*.safetensors
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+# ════════════════════════════════════════════════
+# Build outputs
+# ════════════════════════════════════════════════
+dist/
+build/
+.vite/
+**/dist/
+**/build/
+**/.vite/
 
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
+# ════════════════════════════════════════════════
+# Logs
+# ════════════════════════════════════════════════
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# System Files
+# ════════════════════════════════════════════════
+# OS files
+# ════════════════════════════════════════════════
 .DS_Store
 Thumbs.db
+desktop.ini
 
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
+# ════════════════════════════════════════════════
+# IDE
+# ════════════════════════════════════════════════
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Replit
-.cache/
+# ════════════════════════════════════════════════
+# Personal dev/debug scripts — not part of the app
+# (contain hardcoded local DB credentials)
+# ════════════════════════════════════════════════
+demo_setup.py
+fix_sessions.py
+fix_sessions.mjs
+manage_accounts.py
+diagnose.py
+scan_secrets.py
+
+# ════════════════════════════════════════════════
+# Misc
+# ════════════════════════════════════════════════
 .local/
-.env
+*.tmp
+*.bak
+*.tokenizer.json.bak
+*.tsbuildinfo
+.agents/stt/models/whisper-kannada-BACKUP/

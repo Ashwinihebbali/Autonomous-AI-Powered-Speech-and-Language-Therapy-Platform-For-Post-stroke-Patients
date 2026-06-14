@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { HeartPulse, Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuth, type UserRole } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useListPatients, useCreatePatient } from "@workspace/api-client-react";
+import { useCreatePatient } from "@workspace/api-client-react";
 
 type Mode = "signin" | "signup" | "forgot";
 
@@ -26,59 +26,98 @@ export default function Login() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const { data: patients } = useListPatients({ query: { enabled: mode === "signin" && role === "patient" } });
+  
   const { mutateAsync: createPatient } = useCreatePatient();
 
   const handleSignIn = async () => {
     if (!email || !password) { setError("Please fill in all fields."); return; }
     setIsLoading(true); setError("");
     try {
-      // Simulate auth: for therapist any credentials work; for patient match by name/email
-      await new Promise(r => setTimeout(r, 800));
       if (role === "therapist") {
-        login({ id: 0, name: email.split("@")[0] || "Therapist", role: "therapist", email });
-        navigate("/therapist");
-      } else {
-        // Try to match patient by name (simple demo auth)
-        const match = patients?.find(p => p.name.toLowerCase().includes(email.split("@")[0].toLowerCase())) || patients?.[0];
-        if (match) {
-          login({ id: match.id, name: match.name, role: "patient", email });
-          navigate(`/patient/${match.id}`);
-        } else {
-          setError("No patient account found. Please sign up first.");
+        // Call backend login API for therapist
+        const response = await fetch("http://localhost:3000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, role: "therapist" }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.error || "Login failed. Please try again.");
+          return;
         }
+        if (data.role !== "therapist") {
+          setError("This account is not a therapist account.");
+          return;
+        }
+        login({ id: data.id, name: data.name, role: "therapist", email: data.email });
+        navigate("/therapist");
+
+      } else {
+        // Call backend login API for patient
+        const response = await fetch("http://localhost:3000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, role: "patient" }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.error || "Login failed. Please try again.");
+          return;
+        }
+        if (data.role !== "patient") {
+          setError("This account is not a patient account.");
+          return;
+        }
+        login({ id: data.id, name: data.name, role: "patient", email: data.email });
+        navigate(`/patient/${data.id}`);
       }
     } catch {
-      setError("Sign in failed. Please try again.");
+      setError("Cannot connect to server. Please make sure the server is running.");
     } finally { setIsLoading(false); }
   };
 
   const handleSignUp = async () => {
-    if (!email || !password || !name) { setError("Please fill in all required fields."); return; }
-    if (password !== confirmPassword) { setError("Passwords do not match."); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
-    setIsLoading(true); setError("");
-    try {
-      await new Promise(r => setTimeout(r, 800));
-      if (role === "patient") {
-        const patient = await createPatient({ data: { name, age: parseInt(age) || 50, condition: condition || "Post-stroke recovery" } });
-        setSuccessMsg(t("login.signup.success"));
-        setTimeout(() => {
-          login({ id: patient.id, name: patient.name, role: "patient", email });
-          navigate(`/patient/${patient.id}`);
-        }, 1200);
-      } else {
-        setSuccessMsg(t("login.signup.success"));
-        setTimeout(() => {
-          login({ id: Date.now(), name, role: "therapist", email });
-          navigate("/therapist");
-        }, 1200);
-      }
-    } catch {
-      setError("Sign up failed. Please try again.");
-    } finally { setIsLoading(false); }
-  };
+  if (!email || !password || !name) { setError("Please fill in all required fields."); return; }
+  if (password !== confirmPassword) { setError("Passwords do not match."); return; }
+  if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+  setIsLoading(true); setError("");
+  try {
+    await new Promise(r => setTimeout(r, 800));
+    
+    // Call signup API for both patients and therapists
+    const response = await fetch("http://localhost:3000/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        role,
+        age: parseInt(age) || 0,
+        condition: condition || (role === "therapist" ? "N/A" : "New patient"),
+      }),
+    });
 
+    const data = await response.json();
+    if (!response.ok) {
+      setError(data.error || "Sign up failed.");
+      return;
+    }
+
+    setSuccessMsg(t("login.signup.success"));
+    setTimeout(() => {
+      if (role === "therapist") {
+        login({ id: data.id, name: data.name, role: "therapist", email: data.email });
+        navigate("/therapist");
+      } else {
+        login({ id: data.id, name: data.name, role: "patient", email: data.email });
+        navigate(`/patient/${data.id}`);
+      }
+    }, 1200);
+  } catch {
+    setError("Sign up failed. Please try again.");
+  } finally { setIsLoading(false); }
+};
   const handleForgotPassword = async () => {
     if (!email) { setError("Please enter your email address."); return; }
     setIsLoading(true); setError("");

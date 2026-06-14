@@ -7,17 +7,14 @@ const router = Router();
 // SIGNUP
 router.post("/signup", async (req, res) => {
   const { name, email, password, role } = req.body;
-
   try {
     const existing = await db
       .select()
       .from(patientsTable)
       .where(eq(patientsTable.email, email));
-
     if (existing.length > 0) {
       return res.status(400).json({ error: "User already exists" });
     }
-
     const user = await db
       .insert(patientsTable)
       .values({
@@ -26,10 +23,9 @@ router.post("/signup", async (req, res) => {
         password,
         role: role || "patient",
         age: 0,
-        condition: "New",
-      })
+        condition: role === "therapist" ? "N/A" : "New",
+      } as any)
       .returning();
-
     res.json(user[0]);
   } catch (err) {
     console.error(err);

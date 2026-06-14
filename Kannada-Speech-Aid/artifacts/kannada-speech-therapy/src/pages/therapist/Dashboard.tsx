@@ -26,15 +26,36 @@ export default function TherapistDashboard() {
     }
   };
 
+  const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  return "Good Evening";
+};
+
+const getGreetingKannada = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "ಶುಭ ಬೆಳಗು";
+  if (hour < 17) return "ಶುಭ ಮಧ್ಯಾಹ್ನ";
+  return "ಶುಭ ಸಂಜೆ";
+};
+
   return (
     <AppLayout role="therapist" title="Therapist Dashboard">
       <div className="w-full">
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-foreground">Patient Roster</h1>
-            <p className="text-muted-foreground mt-1">Monitor all your patients' speech therapy progress.</p>
-          </div>
+  <p className="text-lg text-muted-foreground">
+    {getGreetingKannada()} — {getGreeting()}, Therapist! 👋
+  </p>
+  <h1 className="text-3xl font-display font-bold text-foreground">
+    Patient Roster
+  </h1>
+  <p className="text-muted-foreground mt-1">
+    Monitor all your patients' speech therapy progress.
+  </p>
+</div>
           <button 
             onClick={() => setShowAddModal(true)}
             className="bg-primary text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"

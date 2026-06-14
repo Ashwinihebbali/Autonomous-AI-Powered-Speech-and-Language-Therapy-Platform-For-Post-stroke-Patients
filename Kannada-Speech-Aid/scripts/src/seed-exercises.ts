@@ -1,3 +1,10 @@
+import crypto from "crypto";
+
+function hashPassword(password: string): string {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
+
+
 import { db } from "@workspace/db";
 import { exercisesTable, patientsTable } from "@workspace/db/schema";
 
@@ -62,9 +69,42 @@ const exercises = [
 ];
 
 const samplePatients = [
-  { name: "ರಾಮಸ್ವಾಮಿ (Ramaswamy)", age: 67, condition: "Post-stroke aphasia, mild", therapistNotes: "Good motivation, responds well to positive reinforcement" },
-  { name: "ಸರಸ್ವತಿ (Saraswathi)", age: 72, condition: "Post-stroke apraxia of speech", therapistNotes: "Needs extra time, improved consistency over last 2 weeks" },
-  { name: "ವೆಂಕಟೇಶ (Venkatesh)", age: 58, condition: "Post-stroke mild aphasia", therapistNotes: "High motivation, practices daily at home" },
+  { 
+    name: "ರಾಮಸ್ವಾಮಿ (Ramaswamy)", 
+    email: "ramaswamy@example.com",
+    password: "password123",
+    role: "patient" as const,
+    age: 67, 
+    condition: "Post-stroke aphasia, mild", 
+    therapistNotes: "Good motivation, responds well to positive reinforcement" 
+  },
+  { 
+    name: "ಸರಸ್ವತಿ (Saraswathi)", 
+    email: "saraswathi@example.com",
+    password: "password123",
+    role: "patient" as const,
+    age: 72, 
+    condition: "Post-stroke apraxia of speech", 
+    therapistNotes: "Needs extra time, improved consistency over last 2 weeks" 
+  },
+  { 
+    name: "ವೆಂಕಟೇಶ (Venkatesh)", 
+    email: "venkatesh@example.com",
+    password: "password123",
+    role: "patient" as const,
+    age: 58, 
+    condition: "Post-stroke mild aphasia", 
+    therapistNotes: "High motivation, practices daily at home" 
+  },
+  {
+    name: "Therapist Admin",
+    email: "therapist@example.com",
+    password: "password123",
+    role: "therapist" as const,
+    age: 35,
+    condition: "N/A",
+    therapistNotes: "Admin therapist account"
+  }
 ];
 
 async function seed() {

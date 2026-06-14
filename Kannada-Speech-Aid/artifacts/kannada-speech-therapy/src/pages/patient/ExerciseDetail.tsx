@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { 
   useGetExercise, 
@@ -21,14 +21,28 @@ export default function ExerciseDetail() {
   const exerciseId = parseInt(params.exerciseId || "0");
   const { t } = useLanguage();
 
+  const sessionIdRef = useRef<number | null>(null);
+
+  const completeSession = async (sessId: number) => {
+    try {
+      await fetch(`/api/sessions/${sessId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "completed" })
+      });
+    } catch (err) {
+      console.error("Failed to complete session", err);
+    }
+  };
+
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<any | null>(null);
 
   // APIs
-  const { data: exercise, isLoading: loadingExercise } = useGetExercise(exerciseId, { query: { enabled: !!exerciseId }});
+  const { data: exercise, isLoading: loadingExercise } = useGetExercise(exerciseId, { query: { queryKey: ["exercise", exerciseId], enabled: !!exerciseId }});
   const { data: categoryExercises } = useListExercises(
     { category: exercise?.category as any },
-    { query: { enabled: !!exercise?.category } }
+    { query: { queryKey: ["exercises", exercise?.category], enabled: !!exercise?.category } }
   );
   const { mutateAsync: createSession } = useCreateSession();
   const { mutateAsync: transcribeSpeech, isPending: isTranscribing } = useTranscribeSpeech();
@@ -36,6 +50,7 @@ export default function ExerciseDetail() {
 
   // Audio Recorder
   const { isRecording, startRecording, stopRecording, audioBase64, clearRecording } = useAudioRecorder();
+  
 
   // Find next exercise
   const sortedExercises = categoryExercises ? [...categoryExercises].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)) : [];
@@ -50,13 +65,29 @@ export default function ExerciseDetail() {
         .catch(err => console.error("Failed to create session", err));
     }
   }, [patientId, sessionId, createSession]);
+  
+  // Keep ref in sync so cleanup can access latest sessionId
+  useEffect(() => {
+    if (sessionId) {
+      sessionIdRef.current = sessionId;
+    }
+  }, [sessionId]);
+
+  // Complete session when patient navigates away
+  useEffect(() => {
+    return () => {
+      if (sessionIdRef.current) {
+        completeSession(sessionIdRef.current);
+      }
+    };
+  }, []);
 
   // Handle Recording Completion
   useEffect(() => {
     if (audioBase64 && exercise && sessionId) {
       handleTranscription(audioBase64, exercise.kannadaText, exercise.id, sessionId);
     }
-  }, [audioBase64]);
+  }, [audioBase64, exercise, sessionId]);
 
   const handleTranscription = async (base64Audio: string, expectedText: string, exId: number, sessId: number) => {
     try {
@@ -89,8 +120,11 @@ export default function ExerciseDetail() {
     clearRecording();
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (nextExercise) {
+      if (sessionId) {
+        await completeSession(sessionId);
+      }
       setFeedback(null);
       clearRecording();
       navigate(`/patient/${patientId}/exercise/${nextExercise.id}`);

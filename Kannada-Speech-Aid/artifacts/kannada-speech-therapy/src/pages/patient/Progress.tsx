@@ -9,8 +9,8 @@ export default function PatientProgressView() {
   const params = useParams();
   const patientId = parseInt(params.id || "0");
 
-  const { data: patient } = useGetPatient(patientId, { query: { enabled: !!patientId }});
-  const { data: progress, isLoading } = useGetPatientProgress(patientId, { query: { enabled: !!patientId }});
+  const { data: patient } = useGetPatient(patientId, { query: { queryKey: ["patient", patientId], enabled: !!patientId }});
+  const { data: progress, isLoading } = useGetPatientProgress(patientId, { query: { queryKey: ["progress", patientId], enabled: !!patientId }});
 
   if (isLoading) return <AppLayout role="patient"><LoadingSpinner text="Loading your progress..." /></AppLayout>;
   if (!progress) return <AppLayout role="patient">No progress data available.</AppLayout>;
