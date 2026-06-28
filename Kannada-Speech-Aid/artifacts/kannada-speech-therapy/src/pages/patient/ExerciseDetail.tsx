@@ -24,16 +24,30 @@ export default function ExerciseDetail() {
   const sessionIdRef = useRef<number | null>(null);
 
   const completeSession = async (sessId: number) => {
-    try {
-      await fetch(`/api/sessions/${sessId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "completed" })
-      });
-    } catch (err) {
-      console.error("Failed to complete session", err);
-    }
-  };
+  const payload = JSON.stringify({ status: "completed" });
+
+  // sendBeacon is the ONLY browser API guaranteed to deliver a request
+  // even as the tab is closing, refreshing, or the component unmounting
+  // mid-flight. fetch() can be silently cancelled by the browser in that
+  // exact moment — which is what caused all 106 stuck sessions.
+  if (navigator.sendBeacon) {
+    const blob = new Blob([payload], { type: "application/json" });
+    const sent = navigator.sendBeacon(`/api/sessions/${sessId}/complete-beacon`, blob);
+    if (sent) return;
+  }
+
+  // Fallback for in-app navigation where the page stays alive
+  try {
+    await fetch(`/api/sessions/${sessId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+      keepalive: true,
+    });
+  } catch (err) {
+    console.error("Failed to complete session", err);
+  }
+};
 
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<any | null>(null);

@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { patientsTable, therapySessionsTable, speechAttemptsTable } from "@workspace/db/schema";
-import { eq, avg, count } from "drizzle-orm";
+import { eq, avg, count, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -48,8 +48,31 @@ router.get("/:id", async (req, res) => {
     if (!patient) { res.status(404).json({ error: "Patient not found" }); return; }
     const sessions = await db.select({ count: count() }).from(therapySessionsTable).where(eq(therapySessionsTable.patientId, id));
     const scoreData = await db.select({ avgScore: avg(speechAttemptsTable.accuracyScore) }).from(speechAttemptsTable).innerJoin(therapySessionsTable, eq(speechAttemptsTable.sessionId, therapySessionsTable.id)).where(eq(therapySessionsTable.patientId, id));
+    // REPLACE WITH:
     res.json({ ...patient, totalSessions: Number(sessions[0]?.count ?? 0), averageScore: scoreData[0]?.avgScore ? Number(scoreData[0].avgScore) : null });
   } catch (err) { console.error(err); res.status(500).json({ error: "Failed to fetch patient" }); }
+});
+
+// PATCH /api/patients/:id/notes
+router.patch("/:id/notes", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const { therapistNotes } = req.body;
+
+    const [updated] = await db
+      .update(patientsTable)
+      .set({ therapistNotes })
+      .where(eq(patientsTable.id, id))
+      .returning();
+
+    if (!updated) { res.status(404).json({ error: "Patient not found" }); return; }
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update notes" });
+  }
 });
 
 // GET /api/patients/:id/sessions
@@ -61,7 +84,7 @@ router.get("/:id/sessions", async (req, res) => {
       .select()
       .from(therapySessionsTable)
       .where(eq(therapySessionsTable.patientId, id))
-      .orderBy(therapySessionsTable.startedAt);
+      .orderBy(desc(therapySessionsTable.startedAt));
 
     // For each session, fetch attempt count and average score
     const enriched = await Promise.all(sessions.map(async (s) => {

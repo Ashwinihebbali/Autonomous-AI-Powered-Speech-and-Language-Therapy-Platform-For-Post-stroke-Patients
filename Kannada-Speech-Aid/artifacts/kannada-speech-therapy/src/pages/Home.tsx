@@ -41,35 +41,33 @@ export default function Home() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
-          <Link href="/login">
-            <motion.div 
-              whileHover={{ y: -5, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-white rounded-3xl p-8 shadow-lg shadow-primary/5 border border-primary/10 hover:border-primary/30 transition-all cursor-pointer flex flex-col items-center text-center h-full group"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
-                <User className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground mb-3">{t("home.patient")}</h2>
-              <p className="text-muted-foreground">{t("home.patient.desc")}</p>
-            </motion.div>
-          </Link>
+          <motion.div 
+            onClick={() => { window.location.href = "/login"; }}
+            whileHover={{ y: -5, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="bg-white rounded-3xl p-8 shadow-lg shadow-primary/5 border border-primary/10 hover:border-primary/30 transition-all cursor-pointer flex flex-col items-center text-center h-full group"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
+              <User className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-3">{t("home.patient")}</h2>
+            <p className="text-muted-foreground">{t("home.patient.desc")}</p>
+          </motion.div>
 
-          <Link href="/login">
-            <motion.div 
-              whileHover={{ y: -5, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-white rounded-3xl p-8 shadow-lg shadow-secondary/5 border border-secondary/10 hover:border-secondary/30 transition-all cursor-pointer flex flex-col items-center text-center h-full group"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center mb-6 group-hover:bg-secondary group-hover:text-white transition-colors">
-                <ActivitySquare className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground mb-3">{t("home.therapist")}</h2>
-              <p className="text-muted-foreground">{t("home.therapist.desc")}</p>
-            </motion.div>
-          </Link>
+          <motion.div 
+            onClick={() => { window.location.href = "/login?role=therapist"; }}
+            whileHover={{ y: -5, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="bg-white rounded-3xl p-8 shadow-lg shadow-secondary/5 border border-secondary/10 hover:border-secondary/30 transition-all cursor-pointer flex flex-col items-center text-center h-full group"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center mb-6 group-hover:bg-secondary group-hover:text-white transition-colors">
+              <ActivitySquare className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-3">{t("home.therapist")}</h2>
+            <p className="text-muted-foreground">{t("home.therapist.desc")}</p>
+          </motion.div>
         </div>
-      </motion.div>
+        </motion.div>
     </div>
   );
 }

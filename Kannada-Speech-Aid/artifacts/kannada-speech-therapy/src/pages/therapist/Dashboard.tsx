@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "wouter";
 import { useGetProgressSummary, useCreatePatient } from "@workspace/api-client-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -7,6 +8,7 @@ import { Plus, Search, TrendingUp, Minus, TrendingDown, Users } from "lucide-rea
 import { format } from "date-fns";
 
 export default function TherapistDashboard() {
+  const { user } = useAuth();
   const { data: summaries, isLoading, refetch } = useGetProgressSummary();
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -47,7 +49,7 @@ const getGreetingKannada = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
   <p className="text-lg text-muted-foreground">
-    {getGreetingKannada()} — {getGreeting()}, Therapist! 👋
+    {getGreetingKannada()} — {getGreeting()}, {user?.name || "Therapist"}! 👋
   </p>
   <h1 className="text-3xl font-display font-bold text-foreground">
     Patient Roster

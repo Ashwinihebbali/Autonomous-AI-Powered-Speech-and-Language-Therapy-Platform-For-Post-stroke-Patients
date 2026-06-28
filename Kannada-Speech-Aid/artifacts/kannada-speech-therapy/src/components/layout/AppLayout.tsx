@@ -19,8 +19,9 @@ export function AppLayout({ children, role, patientId, title, showBack, backHref
   const [, navigate] = useLocation();
 
   const handleLogout = () => {
+    const wasTherapist = user?.role === "therapist";
     logout();
-    navigate("/login");
+    navigate(wasTherapist ? "/login?role=therapist" : "/login");
   };
 
   return (

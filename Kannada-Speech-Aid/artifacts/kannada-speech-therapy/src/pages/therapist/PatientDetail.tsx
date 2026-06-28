@@ -4,15 +4,16 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
-import { Calendar, User, FileText, CheckCircle2 } from "lucide-react";
+import { Calendar, User, CheckCircle2 } from "lucide-react";
+import { PatientNotes } from "@/components/PatientNotes";
 
 export default function TherapistPatientDetail() {
   const params = useParams();
   const patientId = parseInt(params.id || "0");
 
-  const { data: patient, isLoading: loadingPatient } = useGetPatient(patientId, { query: { enabled: !!patientId }});
-  const { data: progress } = useGetPatientProgress(patientId, { query: { enabled: !!patientId }});
-  const { data: sessions } = useGetPatientSessions(patientId, { query: { enabled: !!patientId }});
+  const { data: patient, isLoading: loadingPatient } = useGetPatient(patientId, { query: { queryKey: ["patient", patientId], enabled: !!patientId }});
+  const { data: progress } = useGetPatientProgress(patientId, { query: { queryKey: ["progress", patientId], enabled: !!patientId }});
+  const { data: sessions } = useGetPatientSessions(patientId, { query: { queryKey: ["sessions", patientId], enabled: !!patientId }});
 
   if (loadingPatient) return <AppLayout role="therapist"><LoadingSpinner text="Loading patient data..." /></AppLayout>;
   if (!patient) return <AppLayout role="therapist">Patient not found</AppLayout>;
@@ -33,13 +34,7 @@ export default function TherapistPatientDetail() {
               <span className="bg-muted px-3 py-1 rounded-full text-sm font-medium text-foreground">Condition: {patient.condition}</span>
               <span className="bg-muted px-3 py-1 rounded-full text-sm font-medium text-foreground">Joined: {format(new Date(patient.createdAt), "MMM yyyy")}</span>
             </div>
-            {patient.therapistNotes && (
-              <div className="bg-accent/10 p-4 rounded-2xl border border-accent/20">
-                <h4 className="text-sm font-bold text-accent-foreground mb-1 flex items-center gap-2"><FileText className="w-4 h-4"/> Clinical Notes</h4>
-                <p className="text-muted-foreground text-sm">{patient.therapistNotes}</p>
-              </div>
-            )}
-          </div>
+            </div>
           
           <div className="flex-shrink-0 grid grid-cols-2 gap-4 w-full md:w-auto">
             <div className="bg-muted/50 p-4 rounded-2xl text-center">
@@ -52,6 +47,9 @@ export default function TherapistPatientDetail() {
             </div>
           </div>
         </div>
+
+        {/* Therapist Notes — editable */}
+        <PatientNotes patientId={patientId} initialNotes={patient.therapistNotes} />
 
         {/* Charts */}
         {progress && progress.weeklyScores.length > 0 && (

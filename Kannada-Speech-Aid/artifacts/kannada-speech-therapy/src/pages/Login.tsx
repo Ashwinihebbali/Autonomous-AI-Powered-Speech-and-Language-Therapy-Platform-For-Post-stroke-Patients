@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeartPulse, Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuth, type UserRole } from "@/contexts/AuthContext";
@@ -10,11 +10,16 @@ type Mode = "signin" | "signup" | "forgot";
 
 export default function Login() {
   const [, navigate] = useLocation();
+  const search = useSearch();
   const { login } = useAuth();
   const { t, lang, setLang } = useLanguage();
 
   const [mode, setMode] = useState<Mode>("signin");
-  const [role, setRole] = useState<UserRole>("patient");
+  const [role, setRole] = useState<UserRole>(
+    () => new URLSearchParams(window.location.search).get("role") === "therapist" 
+      ? "therapist" 
+      : "patient"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -185,20 +190,29 @@ export default function Login() {
             <div className="mb-5">
               <label className="block text-sm font-medium text-foreground mb-2">{t("login.role")}</label>
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRole("patient")}
-                  className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-semibold ${role === "patient" ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}
-                >
-                  <User className="w-4 h-4" /> {t("login.patient")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole("therapist")}
-                  className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-semibold ${role === "therapist" ? "border-secondary bg-secondary/5 text-secondary" : "border-border text-muted-foreground hover:border-secondary/40"}`}
-                >
-                  <User className="w-4 h-4" /> {t("login.therapist")}
-                </button>
+                {/* FIND both role buttons and REPLACE with these: */}
+<button
+  type="button"
+  onClick={() => setRole("patient")}
+  className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-semibold ${
+    role === "patient"
+      ? "border-primary bg-primary text-white shadow-md"
+      : "border-border text-muted-foreground hover:border-primary/40 bg-white"
+  }`}
+>
+  <User className="w-4 h-4" /> {t("login.patient")}
+</button>
+<button
+  type="button"
+  onClick={() => setRole("therapist")}
+  className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-semibold ${
+    role === "therapist"
+      ? "border-primary bg-primary text-white shadow-md"
+      : "border-border text-muted-foreground hover:border-primary/40 bg-white"
+  }`}
+>
+  <User className="w-4 h-4" /> {t("login.therapist")}
+</button>
               </div>
             </div>
           )}
