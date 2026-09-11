@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Save, Edit3, CheckCircle2, X } from "lucide-react";
 
 interface PatientNotesProps {
@@ -11,6 +12,7 @@ export function PatientNotes({ patientId, initialNotes }: PatientNotesProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setNotes(initialNotes || "");
@@ -27,6 +29,8 @@ export function PatientNotes({ patientId, initialNotes }: PatientNotesProps) {
       setIsEditing(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
     } catch (err) {
       console.error("Failed to save notes", err);
     } finally {

@@ -8,6 +8,8 @@
 import os
 import re
 import sys
+import subprocess
+import tempfile
 import numpy as np
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -91,6 +93,37 @@ class WhisperKannadaModel:
         self.model = WhisperModel(model_path, device="cpu", compute_type="int8")
         print("Whisper Kannada model loaded!")
 
+    #New Line
+    def _convert_to_wav(self, input_path: str) -> str:
+        """
+        Convert any audio format to proper 16kHz mono WAV using ffmpeg.
+       The browser sends WebM/Opus which gets written to a .wav file
+       but is still WebM internally — this causes PySoundFile to fail.
+       ffmpeg handles any format and outputs a clean WAV.
+       Returns path to the converted file (caller must delete it).
+        """
+        output_path = input_path + "_converted.wav"
+        try:
+            result = subprocess.run([
+                "ffmpeg",
+                "-y",           # overwrite output
+                "-i", input_path,   # input file (any format)
+                "-ar", "16000",     # resample to 16kHz
+                "-ac", "1",         # mono
+                "-f", "wav",        # force WAV output
+                output_path
+            ], capture_output=True, timeout=30)
+
+            if result.returncode == 0 and os.path.exists(output_path):
+                return output_path
+            else:
+                # ffmpeg failed — return original path and hope for the best
+                print(f"[WARN] ffmpeg conversion failed: {result.stderr.decode()}")
+                return input_path
+        except Exception as e:
+            print(f"[WARN] Audio conversion error: {e}")
+            return input_path
+
     # ── Audio quality checks ─────────────────────────────────
 
     def _check_audio_energy(self, audio_path: str) -> dict:
@@ -152,20 +185,26 @@ class WhisperKannadaModel:
 
     def _is_hallucination(self, transcription: str, audio_duration: float) -> bool:
         """
-        Detect likely Whisper hallucinations.
-        Hallucination = model outputs text when there was silence/noise.
-        Signs: long output from very short audio, or known repeated phrases.
+        Detect Whisper hallucinations including the looping pattern
+        where it repeats the same word many times.
         """
         if not transcription:
             return False
 
         char_count = len(transcription.replace(' ', ''))
 
-        # Too many characters for very short audio = hallucination
-        # Speech produces roughly 3-5 Kannada characters per second
+        # Too many characters for audio length
         max_expected_chars = max(4, audio_duration * 5)
         if char_count > max_expected_chars * 3:
             return True
+
+        # Detect looping hallucination — same word repeated 3+ times
+        words = transcription.split()
+        if len(words) >= 4:
+            # Check if any word repeats more than 3 times
+            for word in set(words):
+                if word and words.count(word) >= 3:
+                    return True
 
         return False
 
@@ -174,17 +213,15 @@ class WhisperKannadaModel:
     def _score_single_phoneme(self, transcription: str, expected: str) -> float:
         """
         Special scoring for vowel and consonant exercises (1-2 characters).
-        Whisper struggles with single syllables so we:
-        1. Check if the exact character appears anywhere in output
-        2. Check if any acceptable romanization appears in output
-        3. Give credit for any non-empty output (patient at least tried)
+        Key fix: if Whisper outputs a long word for a single sound exercise,
+        it almost certainly hallucinated — penalise heavily instead of
+        giving partial vowel/consonant category credit.
         """
         if not transcription:
             return 0.0
 
         # Direct match — exact character found in transcription
         if expected in transcription:
-            # Penalise slightly if there's a lot of extra text
             ratio = len(expected) / max(len(transcription), 1)
             return max(85.0, round(ratio * 100, 1))
 
@@ -196,79 +233,102 @@ class WhisperKannadaModel:
                 if sound.lower() in trans_lower:
                     return 83.0
 
-        # Check if transcription starts with a similar-sounding character
-        # (Whisper may output a different but acoustically similar vowel)
-        vowels = set('ಅಆಇಈಉಊಎಏಒಓ')
+        # ── HALLUCINATION GUARD ──────────────────────────────────
+        # For a single-character exercise, Whisper should output
+        # at most 3–4 characters. If it outputs a long word like
+        # 'ಆಸ್ಪತ್ರೆ' (6+ chars), it hallucinated a full word
+        # instead of transcribing the short sound.
+        # Do NOT give vowel/consonant category credit in this case.
+        if len(transcription) > 4:
+            return 15.0  # Patient likely spoke — but model hallucinated
+
+        # Only give partial category credit when transcription is SHORT
+        # (meaning Whisper at least attempted to transcribe a short sound)
+        vowels     = set('ಅಆಇಈಉಊಎಏಒಓ')
         consonants = set('ಕಖಗಘಚಛಜಝಟಠಡತದನಪಫಬಭಮಯರಲವಶಸಹಳ')
 
         if expected in vowels and transcription[0] in vowels:
-            # Got a vowel, just not the exact one — partial credit
-            return 55.0
+            return 55.0  # Got a vowel, just not the exact one
 
         if expected in consonants and transcription[0] in consonants:
-            # Got a consonant, just not the exact one — partial credit
-            return 50.0
+            return 50.0  # Got a consonant, just not the exact one
 
-        # Patient spoke something — give minimum encouragement credit
-        # Better than penalising them for Whisper's weakness with single chars
         if len(transcription) > 0:
-            return 35.0
+            return 30.0  # Patient spoke something
 
         return 0.0
 
     # ── Main transcription ───────────────────────────────────
 
-    def transcribe(self, audio_path: str) -> dict:
+    def transcribe(self, audio_path: str, expected_text: str = "") -> dict:
         """Transcribe a Kannada audio file with silence detection."""
-        waveform  = load_audio(audio_path)
-        validated = validate_audio(waveform)
+        converted_path = self._convert_to_wav(audio_path)
 
-        if not validated["valid"]:
-            return {"success": False, "error": validated["message"]}
+        try:
+            # Use converted file for ALL operations
+            waveform  = load_audio(converted_path)
+            validated = validate_audio(waveform)
 
-        # Check for silence before sending to AI
-        energy_check = self._check_audio_energy(audio_path)
-        if energy_check["is_silent"]:
+            if not validated["valid"]:
+                return {"success": False, "error": validated["message"]}
+
+            # Silence check on converted file
+            energy_check = self._check_audio_energy(converted_path)
+            if energy_check["is_silent"]:
+                return {
+                    "success"         : True,
+                    "transcription"   : "",
+                    "duration_seconds": energy_check["duration"],
+                    "model"           : "whisper-kannada-ct2-int8",
+                    "silent"          : True,
+                }
+
+            # Transcribe using converted file
+            segments, info = self.model.transcribe(
+                converted_path,
+                language="kn",
+                beam_size=3,
+                vad_filter=True,
+                vad_parameters=dict(min_silence_duration_ms=200),
+                temperature=0.0,
+                no_speech_threshold=0.4,
+                log_prob_threshold=-0.8,
+                condition_on_previous_text=False,
+                compression_ratio_threshold=2.4,
+                initial_prompt=expected_text if expected_text else None,
+            )
+
+            raw_transcription = " ".join([seg.text for seg in segments]).strip()
+            transcription     = self._clean_transcription(raw_transcription)
+
+            if self._is_hallucination(transcription, energy_check["duration"]):
+                transcription = ""
+
             return {
                 "success"         : True,
-                "transcription"   : "",
-                "duration_seconds": energy_check["duration"],
+                "transcription"   : transcription,
+                "duration_seconds": validated["duration_seconds"],
                 "model"           : "whisper-kannada-ct2-int8",
-                "silent"          : True,
+                "silent"          : False,
             }
 
-        segments, info = self.model.transcribe(
-            audio_path,
-            language="kn",
-            beam_size=5,
-            vad_filter=True,
-            vad_parameters=dict(min_silence_duration_ms=300),
-            temperature=0.0,           # deterministic output, no random variation
-            no_speech_threshold=0.6,   # higher threshold = less hallucination
-            log_prob_threshold=-1.0,   # filter low-confidence outputs
-        )
+        except Exception as e:
+            print(f"[TRANSCRIBE ERROR] {e}")
+            return {"success": False, "error": str(e)}
 
-        raw_transcription = " ".join([seg.text for seg in segments]).strip()
-        transcription     = self._clean_transcription(raw_transcription)
-
-        # Detect hallucination
-        duration = energy_check["duration"]
-        if self._is_hallucination(transcription, duration):
-            transcription = ""
-
-        return {
-            "success"         : True,
-            "transcription"   : transcription,
-            "duration_seconds": validated["duration_seconds"],
-            "model"           : "whisper-kannada-ct2-int8",
-            "silent"          : False,
-        }
+        finally:
+            # Always clean up the converted temp file
+            if converted_path != audio_path and os.path.exists(converted_path):
+                try:
+                    os.unlink(converted_path)
+                except Exception:
+                    pass
 
     # ── Pronunciation scoring ────────────────────────────────
 
     def score_pronunciation(self, audio_path: str, expected_text: str) -> dict:
         """Score pronunciation with improved handling per exercise type."""
-        result = self.transcribe(audio_path)
+        result = self.transcribe(audio_path, expected_text=expected_text)
 
         if not result["success"]:
             return result
@@ -300,12 +360,24 @@ class WhisperKannadaModel:
             score = self._score_single_phoneme(transcription, expected)
 
         elif is_short_word:
-            score = self._calculate_similarity(transcription, expected)
-            if expected in transcription:
-                score = max(score, 86.0)
-            elif transcription in expected:
-              ratio = len(transcription) / len(expected)
-              score = max(score, round(ratio * 88, 1))
+            trans_len = len(transcription)
+            exp_len   = len(expected)
+
+            # Hallucination guard: if Whisper outputs a word much longer
+            # than expected, it almost certainly hallucinated something else
+            if trans_len >= exp_len * 2:
+                # First character matches = patient got the start right
+                if len(transcription) > 0 and transcription[0] == expected[0]:
+                    score = 38.0
+                else:
+                    score = 15.0
+            else:
+                score = self._calculate_similarity(transcription, expected)
+                if expected in transcription:
+                    score = max(score, 86.0)
+                elif transcription in expected:
+                    ratio = len(transcription) / len(expected)
+                    score = max(score, round(ratio * 88, 1))
 
         else:
             # Sentences — standard similarity scoring

@@ -19,7 +19,7 @@ Write-Host "1. Starting AI Server (port 8000)..." -ForegroundColor Green
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'D:\Major Project\Kannada-Speech-Aid'; .agents\venv\Scripts\activate; cd .agents\api; python agent_server.py"
 
 Write-Host "   Waiting for AI server to load model (15 seconds)..." -ForegroundColor Yellow
-Start-Sleep -Seconds 15
+Start-Sleep -Seconds 35
 
 # Start Express
 Write-Host "2. Starting Express API (port 3000)..." -ForegroundColor Green

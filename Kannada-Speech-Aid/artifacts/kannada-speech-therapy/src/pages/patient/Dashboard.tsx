@@ -12,10 +12,10 @@ export default function PatientDashboard() {
   const { t } = useLanguage();
   
   const CATEGORIES = [
-    { id: "vowels", titleKey: "category.vowels", descKey: "category.vowels.desc", icon: Mic2, color: "bg-teal-50 text-teal-600", border: "border-teal-100 hover:border-teal-300" },
-    { id: "consonants", titleKey: "category.consonants", descKey: "category.consonants.desc", icon: Type, color: "bg-orange-50 text-orange-600", border: "border-orange-100 hover:border-orange-300" },
-    { id: "words", titleKey: "category.words", descKey: "category.words.desc", icon: WholeWord, color: "bg-yellow-50 text-yellow-600", border: "border-yellow-100 hover:border-yellow-300" },
-    { id: "sentences", titleKey: "category.sentences", descKey: "category.sentences.desc", icon: AlignLeft, color: "bg-pink-50 text-pink-600", border: "border-pink-100 hover:border-pink-300" },
+    { id: "vowels", titleKey: "category.vowels", descKey: "category.vowels.desc", icon: Mic2, color: "bg-teal-50 text-teal-600", border: "border-teal-100 hover:border-teal-300", phase2: true },
+    { id: "consonants", titleKey: "category.consonants", descKey: "category.consonants.desc", icon: Type, color: "bg-orange-50 text-orange-600", border: "border-orange-100 hover:border-orange-300", phase2: true },
+    { id: "words", titleKey: "category.words", descKey: "category.words.desc", icon: WholeWord, color: "bg-yellow-50 text-yellow-600", border: "border-yellow-100 hover:border-yellow-300", phase2: false },
+    { id: "sentences", titleKey: "category.sentences", descKey: "category.sentences.desc", icon: AlignLeft, color: "bg-pink-50 text-pink-600", border: "border-pink-100 hover:border-pink-300", phase2: false },
   ];
 
   const { data: patient, isLoading } = useGetPatient(patientId, { query: { enabled: !!patientId }});
@@ -38,6 +38,18 @@ export default function PatientDashboard() {
           </p>
         </div>
 
+        {/* Therapist Notes — shown to patient if notes exist */}
+        {patient.therapistNotes && (
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mb-8">
+            <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
+              📋 Message from your Therapist
+            </h3>
+            <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
+              {patient.therapistNotes}
+            </p>
+          </div>
+        )}
+
         <h2 className="text-2xl font-bold text-foreground mb-6 px-2">{t("patient.categories")}</h2>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -55,6 +67,11 @@ export default function PatientDashboard() {
                   <cat.icon className="w-10 h-10" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground">{t(cat.titleKey)}</h3>
+                {cat.phase2 && (
+                  <span className="mt-2 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">
+                    ⚡ Improving in Phase 2
+                  </span>
+                )}
                 <p className="text-muted-foreground mt-2 text-sm">{t(cat.descKey)}</p>
                 <div className="mt-6 flex gap-2">
                   <span className="px-3 py-1 bg-muted rounded-full text-xs font-medium text-muted-foreground">Beginner</span>

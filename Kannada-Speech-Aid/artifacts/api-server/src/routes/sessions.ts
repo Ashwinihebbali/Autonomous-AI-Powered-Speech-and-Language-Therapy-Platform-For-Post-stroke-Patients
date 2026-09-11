@@ -73,7 +73,26 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
-// POST /api/sessions/:id/attempts
+router.post("/:id/complete-beacon", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) { res.status(400).end(); return; }
+
+    await db
+      .update(therapySessionsTable)
+      .set({
+        status: "completed",
+        completedAt: new Date()
+      })
+      .where(eq(therapySessionsTable.id, id));
+
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).end();
+  }
+});
+
 router.post("/:id/attempts", async (req, res) => {
   try {
     const id = Number(req.params.id);
