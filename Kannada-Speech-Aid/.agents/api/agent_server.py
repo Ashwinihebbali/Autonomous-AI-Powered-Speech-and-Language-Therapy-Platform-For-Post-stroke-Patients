@@ -1,6 +1,26 @@
-﻿import sys
+﻿from huggingface_hub import snapshot_download
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+def ensure_model_exists(repo_id: str):
+    """Download model from HuggingFace if not present locally."""
+    model_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "stt", "models", "whisper-kannada-ct2"
+    )
+    model_bin = os.path.join(model_path, "model.bin")
+
+    if not os.path.exists(model_bin):
+        print("Model not found locally. Downloading from HuggingFace...")
+        snapshot_download(
+            repo_id=repo_id,
+            local_dir=model_path,
+            ignore_patterns=["*.git*"],
+            token=os.environ.get("HF_TOKEN")
+        )
+        print("Model downloaded successfully!")
+    else:
+        print(f"Model found at {model_path}")
+
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +29,9 @@ import shutil
 import uvicorn
 
 from stt.whisper_inference import get_model
+
+# Huggingface model download and caching
+ensure_model_exists("RG-09/kannada-whisper-ct2")
 
 app = FastAPI(title="Kannada Speech AI Server")
 
