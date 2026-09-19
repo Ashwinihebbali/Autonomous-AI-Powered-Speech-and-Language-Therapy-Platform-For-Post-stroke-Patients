@@ -1,5 +1,5 @@
 # Kannada Speech Aid — AI-Assisted Speech Therapy Platform - Phase 1 (Milestone 1) 
-
+ 
 <div align="center">
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
