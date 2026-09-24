@@ -1,4 +1,4 @@
-# Kannada Speech Aid — AI-Assisted Speech Therapy Platform - Phase 1 (Milestone 1)  
+# Kannada Speech Aid — AI-Assisted Speech Therapy Platform - Phase 1 (Milestone 1)   
  
 <div align="center">
 
